@@ -11,12 +11,12 @@
 
 namespace Webrtc\SDP;
 
-use Webrtc\DTLS\Parameters\RTCDtlsParameters;
 use Webrtc\ICE\RTCIceCandidate;
 use Webrtc\ICE\RTCIceParameters;
-use Webrtc\RTP\Parameters\RTCRtpParameters;
-use Webrtc\SCTP\RTCSctpCapabilities;
+use Webrtc\RTPParameter\RTCRtpParameters;
+use Webrtc\SDP\DtlsParameter\RTCDtlsParameters;
 use Webrtc\SDP\Enum\SDPDirections;
+use Webrtc\SDP\SctpParameter\RTCSctpCapabilities;
 
 /**
  * Represents a media description for SDP (Session Description Protocol).

@@ -11,16 +11,15 @@
 
 namespace Webrtc\SDP;
 
-use Webrtc\DTLS\Enum\DtlsRole;
-use Webrtc\DTLS\Parameters\RTCDtlsFingerprint;
 use Webrtc\Exception\InvalidArgumentException;
 use Webrtc\ICE\RTCIceCandidate;
-use Webrtc\RTP\Parameters\RTCRtcpFeedback;
-use Webrtc\RTP\Parameters\RTCRtpCodecParameters;
-use Webrtc\RTP\Parameters\RTCRtpHeaderExtensionParameters;
-use Webrtc\RTP\RtpConstants;
-use Webrtc\SCTP\RTCSctpCapabilities;
+use Webrtc\RTPParameter\RTCRtcpFeedback;
+use Webrtc\RTPParameter\RTCRtpCodecParameters;
+use Webrtc\RTPParameter\RTCRtpHeaderExtensionParameters;
+use Webrtc\SDP\DtlsParameter\RTCDtlsFingerprint;
+use Webrtc\SDP\Enum\DtlsRole;
 use Webrtc\SDP\Enum\SDPDirections;
+use Webrtc\SDP\SctpParameter\RTCSctpCapabilities;
 
 /**
  * Represents a session description for SDP (Session Description Protocol).
@@ -36,6 +35,7 @@ class SessionDescription
 
     /** @var string[] Supported SSRC attributes. */
     private const array SSRC_INFO_ATTRS = ["cname", "msid", "mslabel", "label"];
+    private const array FORBIDDEN_PAYLOAD_TYPES = [72, 73, 74, 75, 76];
     const array DIRECTIONS = ["inactive", "sendonly", "recvonly", "sendrecv"];
     /** @var int The SDP version. */
     private int $version = 0;
@@ -246,7 +246,7 @@ class SessionDescription
         if (in_array($kind, ["audio", "video"])) {
             $fmtInt = array_map('intval', $fmt);
             foreach ($fmtInt as $pt) {
-                if ($pt < 0 || $pt >= 256 || in_array($pt, RtpConstants::FORBIDDEN_PAYLOAD_TYPES)) {
+                if ($pt < 0 || $pt >= 256 || in_array($pt, self::FORBIDDEN_PAYLOAD_TYPES)) {
                     throw new InvalidArgumentException("Invalid payload type: $pt");
                 }
             }
