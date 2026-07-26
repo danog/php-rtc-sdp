@@ -1,7 +1,7 @@
 {
-    "name": "quasarstream/sdp",
+    "name": "danog/php-rtc-sdp",
     "type": "library",
-    "description": "A PHP library for parsing and generating SDP (Session Description Protocol).",
+    "description": "A PHP library for parsing and generating SDP (Session Description Protocol). Fork with FFI made optional and a pure-PHP DTLS/SRTP stack, maintained for MadelineProto.",
     "keywords": [
         "rtp",
         "sdp"
@@ -43,5 +43,8 @@
             "Tests\\Webrtc\\SDP\\": "tests"
         }
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "replace": {
+        "quasarstream/sdp": "self.version"
+    }
 }
