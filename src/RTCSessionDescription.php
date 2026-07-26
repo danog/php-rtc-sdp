@@ -25,7 +25,7 @@ class RTCSessionDescription
     private string $type;
 
     /** @var string[] Valid types for the session description. */
-    private const array VALID_TYPES = ["offer", "pranswer", "answer", "rollback"];
+    private const VALID_TYPES = ["offer", "pranswer", "answer", "rollback"];
 
     /**
      * Initializes a new RTCSessionDescription instance.

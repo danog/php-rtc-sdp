@@ -68,7 +68,7 @@ class MediaDescription
     private ?string $iceOptions = null;
 
     // DTLS role to SDP setup mapping
-    private const array DTLS_ROLE_SETUP = [
+    private const DTLS_ROLE_SETUP = [
         'auto' => 'actpass',
         'client' => 'active',
         'server' => 'passive',

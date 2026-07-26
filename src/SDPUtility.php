@@ -15,8 +15,8 @@ use Webrtc\Exception\InvalidArgumentException;
 
 class SDPUtility
 {
-    private const string IP_REGEX = "/^IN (IP4|IP6) ([^ ]+)$/";
-    public const array FMTP_INT_PARAMETERS = ["cname", "msid", "mslabel", "label"];
+    private const IP_REGEX = "/^IN (IP4|IP6) ([^ ]+)$/";
+    public const FMTP_INT_PARAMETERS = ["cname", "msid", "mslabel", "label"];
 
     /**
      * Extracts the IP address from an SDP string.

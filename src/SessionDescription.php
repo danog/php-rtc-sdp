@@ -27,16 +27,16 @@ use Webrtc\SDP\SctpParameter\RTCSctpCapabilities;
 class SessionDescription
 {
     /** @var array<string, string> Mapping of DTLS setup roles. */
-    private const array DTLS_SETUP_ROLE = [
+    private const DTLS_SETUP_ROLE = [
         "actpass" => DtlsRole::Auto,
         "active" => DtlsRole::Client,
         "passive" => DtlsRole::Server,
     ];
 
     /** @var string[] Supported SSRC attributes. */
-    private const array SSRC_INFO_ATTRS = ["cname", "msid", "mslabel", "label"];
-    private const array FORBIDDEN_PAYLOAD_TYPES = [72, 73, 74, 75, 76];
-    const array DIRECTIONS = ["inactive", "sendonly", "recvonly", "sendrecv"];
+    private const SSRC_INFO_ATTRS = ["cname", "msid", "mslabel", "label"];
+    private const FORBIDDEN_PAYLOAD_TYPES = [72, 73, 74, 75, 76];
+    const DIRECTIONS = ["inactive", "sendonly", "recvonly", "sendrecv"];
     /** @var int The SDP version. */
     private int $version = 0;
     /** @var string|null The origin field. */
@@ -327,7 +327,7 @@ class SessionDescription
                     break;
                 default:
                     if (in_array($attr, self::DIRECTIONS)) {
-                        $media->setDirection(SDPDirections::{$attr});
+                        $media->setDirection(constant(SDPDirections::class . "::" . $attr));
                     }
             }
         }
