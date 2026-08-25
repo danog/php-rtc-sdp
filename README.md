@@ -1,9 +1,15 @@
 # SDP Library for PHP
 
-[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.4-blue.svg)](https://php.net/)
+[![PHP Version](https://img.shields.io/badge/php-%3E%3D8.2-blue.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/license-BSD-blue.svg)](LICENSE)
 
 A PHP library for parsing and generating SDP (Session Description Protocol). This package supports media negotiation, ICE parameters, DTLS fingerprints, and codec configurations used in WebRTC.
+
+## About this fork
+
+This is the `danog/php-rtc-sdp` PHP 8.2+ fork used by MadelineProto. It is published separately from upstream and declares that it replaces `quasarstream/sdp`.
+
+The forked stack keeps the upstream `quasarstream/*` dependency constraints for compatibility. Each `danog/php-rtc-*` package replaces its upstream counterpart, so consumers select the complete maintained stack by requiring the corresponding danog packages together.
 
 ## Features
 
@@ -14,7 +20,7 @@ A PHP library for parsing and generating SDP (Session Description Protocol). Thi
 
 ## Requirements
 
-- PHP ≥ 8.4
+- PHP ≥ 8.2
 
 ## Documentation
 

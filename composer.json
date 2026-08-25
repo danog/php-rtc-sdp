@@ -1,7 +1,7 @@
 {
     "name": "danog/php-rtc-sdp",
     "type": "library",
-    "description": "A PHP library for parsing and generating SDP (Session Description Protocol). Fork with FFI made optional and a pure-PHP DTLS/SRTP stack, maintained for MadelineProto.",
+    "description": "SDP parsing and generation for PHP WebRTC. MadelineProto's PHP 8.2+ fork is a Composer-compatible component of the modular danog/php-rtc stack.",
     "keywords": [
         "rtp",
         "sdp"
