@@ -24,9 +24,9 @@
     ],
     "require": {
         "php": "^8.2",
-        "quasarstream/exception": "^1.0",
-        "quasarstream/rtp-parameter": "^1.0",
-        "quasarstream/ice": "^1.0",
+        "danog/php-rtc-exception": "^1.0",
+        "danog/php-rtc-rtp-parameter": "^1.0",
+        "danog/php-rtc-ice": "^1.0",
         "symfony/polyfill-php84": "^1.32"
     },
     "require-dev": {
@@ -43,8 +43,5 @@
             "Tests\\Webrtc\\SDP\\": "tests"
         }
     },
-    "minimum-stability": "dev",
-    "replace": {
-        "quasarstream/sdp": "self.version"
-    }
+    "minimum-stability": "dev"
 }
