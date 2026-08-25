@@ -36,7 +36,6 @@ class SessionDescription
     /** @var string[] Supported SSRC attributes. */
     private const SSRC_INFO_ATTRS = ["cname", "msid", "mslabel", "label"];
     private const FORBIDDEN_PAYLOAD_TYPES = [72, 73, 74, 75, 76];
-    const DIRECTIONS = ["inactive", "sendonly", "recvonly", "sendrecv"];
     /** @var int The SDP version. */
     private int $version = 0;
     /** @var string|null The origin field. */
@@ -326,8 +325,9 @@ class SessionDescription
                     $this->decodeSsrcAttribute($media, $value);
                     break;
                 default:
-                    if (in_array($attr, self::DIRECTIONS)) {
-                        $media->setDirection(constant(SDPDirections::class . "::" . $attr));
+                    $direction = SDPDirections::fromString($attr);
+                    if ($direction !== SDPDirections::unknown) {
+                        $media->setDirection($direction);
                     }
             }
         }

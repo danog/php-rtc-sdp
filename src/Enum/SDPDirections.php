@@ -19,4 +19,14 @@ enum SDPDirections : int
     case sendrecv = 3;
     case unknown = -1;
 
+    public static function fromString(string $direction): SDPDirections
+    {
+        return match ($direction) {
+            'inactive' => self::inactive,
+            'sendonly' => self::sendonly,
+            'recvonly' => self::recvonly,
+            'sendrecv' => self::sendrecv,
+            default => self::unknown,
+        };
+    }
 }
