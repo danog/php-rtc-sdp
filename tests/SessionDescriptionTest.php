@@ -37,6 +37,7 @@ use Webrtc\SDP\SsrcDescription;
 #[UsesClass(RTCSctpCapabilities::class)]
 #[UsesClass(RTCRtpHeaderExtensionParameters::class)]
 #[UsesClass(RTCRtcpFeedback::class)]
+#[UsesClass(\Webrtc\SDP\Enum\SDPDirections::class)]
 #[CoversClass(SessionDescription::class)]
 class SessionDescriptionTest extends TestCase
 {
