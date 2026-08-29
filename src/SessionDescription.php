@@ -24,9 +24,9 @@ use Webrtc\SDP\SctpParameter\RTCSctpCapabilities;
 /**
  * Represents a session description for SDP (Session Description Protocol).
  */
-class SessionDescription
+final class SessionDescription
 {
-    /** @var array<string, string> Mapping of DTLS setup roles. */
+    /** @var array<string, DtlsRole> Mapping of DTLS setup roles. */
     private const DTLS_SETUP_ROLE = [
         "actpass" => DtlsRole::Auto,
         "active" => DtlsRole::Client,
@@ -188,10 +188,6 @@ class SessionDescription
             foreach (array_slice($mediaLines, 1) as $line) {
                 $this->decodeMediaFmtpAndRtcpFpAttribute($media, $line);
             }
-
-            if ($media->getDtls()->role === null) {
-                $media->setDtls(null);
-            }
         }
     }
 
@@ -203,22 +199,27 @@ class SessionDescription
      */
     private function assignMediaAttribute(MediaDescription $media): void
     {
-        if ($this->dtlsFingerprints) {
-            $media->getDtls()->fingerprints = $this->dtlsFingerprints;
+        $dtls = $media->getDtls();
+        $ice = $media->getIce();
+        if ($dtls === null || $ice === null) {
+            throw new InvalidArgumentException("Media description is missing DTLS or ICE parameters");
         }
-        if ($this->dtlsRole) {
-            $media->getDtls()->role = $this->dtlsRole;
+        if ($this->dtlsFingerprints !== null && $this->dtlsFingerprints !== []) {
+            $dtls->fingerprints = $this->dtlsFingerprints;
         }
-        if ($this->iceUsernameFragment) {
-            $media->getIce()->usernameFragment = $this->iceUsernameFragment;
+        if ($this->dtlsRole !== null) {
+            $dtls->role = $this->dtlsRole;
         }
-        if($this->icePassword) {
-            $media->getIce()->password = $this->icePassword;
+        if ($this->iceUsernameFragment !== null && $this->iceUsernameFragment !== '') {
+            $ice->usernameFragment = $this->iceUsernameFragment;
+        }
+        if ($this->icePassword !== null && $this->icePassword !== '') {
+            $ice->password = $this->icePassword;
         }
         if ($this->iceLite) {
-            $media->getIce()->iceLite = true;
+            $ice->iceLite = true;
         }
-        if ($this->iceOptions) {
+        if ($this->iceOptions !== null && $this->iceOptions !== '') {
             $media->setIceOptions($this->iceOptions);
         }
     }
@@ -277,17 +278,17 @@ class SessionDescription
                     $this->decodeExtmapAttribute($media, $value);
                     break;
                 case "fingerprint":
-                    list($algorithm, $fingerprint) = explode(" ", $value);
-                    $media->getDtls()->fingerprints[] = new RTCDtlsFingerprint($algorithm, $fingerprint);
+                    [$algorithm, $fingerprint] = self::splitPair($value, " ");
+                    $media->requireDtls()->fingerprints[] = new RTCDtlsFingerprint($algorithm, $fingerprint);
                     break;
                 case "ice-options":
                     $media->setIceOptions($value);
                     break;
                 case "ice-pwd":
-                    $media->getIce()->password = $value;
+                    $media->requireIce()->password = $value;
                     break;
                 case "ice-ufrag":
-                    $media->getIce()->usernameFragment = $value;
+                    $media->requireIce()->usernameFragment = $value;
                     break;
                 case "max-message-size":
                     $media->setSctpCapabilities(new RTCSctpCapabilities((int)$value));
@@ -306,17 +307,21 @@ class SessionDescription
                     $media->setRtcpMux(true);
                     break;
                 case "setup":
-                    $media->getDtls()->role = self::DTLS_SETUP_ROLE[$value] ?? "";
+                    $role = self::DTLS_SETUP_ROLE[$value] ?? null;
+                    if ($role === null) {
+                        throw new InvalidArgumentException("Invalid DTLS setup role: $value");
+                    }
+                    $media->requireDtls()->role = $role;
                     break;
                 case "rtpmap":
                     $this->decodeRtpmapAttribute($media, $value);
                     break;
                 case "sctpmap":
-                    list($formatId, $formatDesc) = explode(" ", $value, 2);
-                    $media->addSctpmap($formatId, $formatDesc);
+                    [$formatId, $formatDesc] = self::splitPair($value, " ");
+                    $media->addSctpmap((int)$formatId, $formatDesc);
                     break;
                 case "sctp-port":
-                    $media->setSctpPort($value);
+                    $media->setSctpPort((int)$value);
                     break;
                 case "ssrc-group":
                     $media->addSsrcGroup(SDPUtility::parseGroup($value, "int"));
@@ -378,8 +383,8 @@ class SessionDescription
      */
     private function decodeRtcpAttribute(MediaDescription $media, string $value): void
     {
-        list($port, $rest) = explode(" ", $value, 2);
-        $media->setRtcpPort($port);
+        [$port, $rest] = self::splitPair($value, " ");
+        $media->setRtcpPort((int)$port);
         $media->setRtcpHost(SDPUtility::ipAddressFromSdp($rest));
     }
 
@@ -391,9 +396,12 @@ class SessionDescription
      */
     private function decodeRtpmapAttribute(MediaDescription $media, string $value): void
     {
-        list($formatId, $formatDesc) = explode(" ", $value, 2);
+        [$formatId, $formatDesc] = self::splitPair($value, " ");
 
         $bits = explode("/", $formatDesc);
+        if (!isset($bits[1])) {
+            throw new InvalidArgumentException("Malformed rtpmap value, expected \"codec/clockrate\": $value");
+        }
         $channels = $media->getKind() === "video" ? null : (($media->getKind() === "audio" && count($bits) > 2) ? (int)$bits[2] : 1);
         $codec = new RTCRtpCodecParameters(
             $media->getKind() . "/" . $bits[0],
@@ -412,9 +420,10 @@ class SessionDescription
      */
     private function decodeSsrcAttribute(MediaDescription $media, string $value): void
     {
-        list($ssrcStr, $ssrcDesc) = explode(" ", $value, 2);
+        [$ssrcStr, $ssrcDesc] = self::splitPair($value, " ");
         $ssrc = (int)$ssrcStr;
-        list($ssrcAttr, $ssrcValue) = explode(":", $ssrcDesc, 2);
+        $descParts = explode(":", $ssrcDesc, 2);
+        $ssrcAttr = $descParts[0];
 
         $ssrcInfo = null;
         foreach ($media->getSsrc() as $info) {
@@ -427,8 +436,8 @@ class SessionDescription
             $ssrcInfo = new SsrcDescription($ssrc);
             $media->addSsrc($ssrcInfo);
         }
-        if (in_array($ssrcAttr, self::SSRC_INFO_ATTRS)) {
-            $ssrcInfo->$ssrcAttr = $ssrcValue;
+        if (isset($descParts[1]) && in_array($ssrcAttr, self::SSRC_INFO_ATTRS, true)) {
+            $ssrcInfo->$ssrcAttr = $descParts[1];
         }
     }
 
@@ -440,7 +449,7 @@ class SessionDescription
      */
     private function decodeFmtpAttribute(MediaDescription $media, string $value): void
     {
-        list($formatId, $formatDesc) = explode(" ", $value, 2);
+        [$formatId, $formatDesc] = self::splitPair($value, " ");
         $codec = self::findCodec($media->getRtp()->codecs, (int)$formatId);
         $codec->parameters = SDPUtility::parametersFromSdp($formatDesc);
     }
@@ -454,6 +463,9 @@ class SessionDescription
     private function decodeRtcpFbAttribute(MediaDescription $media, string $value): void
     {
         $bits = explode(" ", $value, 3);
+        if (!isset($bits[1])) {
+            throw new InvalidArgumentException("Malformed rtcp-fb value, expected \"payloadType type\": $value");
+        }
         foreach ($media->getRtp()->codecs as $codec) {
             if ($bits[0] === "*" || $bits[0] === (string)$codec->payloadType) {
                 $codec->rtcpFeedback[] = new RTCRtcpFeedback(
@@ -470,10 +482,29 @@ class SessionDescription
      * @param string $line The attribute line.
      * @return array{string, string} The attribute name and value.
      */
+    /**
+     * @return array{string, string}
+     */
     private static function parseAttributeLine(string $line): array
     {
         $parts = explode(":", substr($line, 2), 2);
         return [$parts[0], $parts[1] ?? ""];
+    }
+
+    /**
+     * Splits a value into exactly two parts on the first occurrence of a separator.
+     *
+     * @param non-empty-string $separator
+     * @return array{string, string}
+     * @throws InvalidArgumentException If the value does not contain the separator.
+     */
+    private static function splitPair(string $value, string $separator): array
+    {
+        $parts = explode($separator, $value, 2);
+        if (!isset($parts[1])) {
+            throw new InvalidArgumentException("Malformed SDP value, expected \"$separator\" in: $value");
+        }
+        return [$parts[0], $parts[1]];
     }
 
     /**
@@ -513,7 +544,15 @@ class SessionDescription
 
         $lines[] = "t=$this->time";
 
-        if (array_reduce($this->media, fn($carry, $m) => $carry || $m->getIce()->iceLite, false)) {
+        $sessionIceLite = false;
+        foreach ($this->media as $m) {
+            $ice = $m->getIce();
+            if ($ice !== null && $ice->iceLite) {
+                $sessionIceLite = true;
+                break;
+            }
+        }
+        if ($sessionIceLite) {
             $lines[] = "a=ice-lite";
         }
 
@@ -624,7 +663,7 @@ class SessionDescription
     }
 
     /**
-     * @param array $media
+     * @param array<array-key, MediaDescription> $media
      * @return void
      */
     public function setMedia(array $media): void
@@ -677,7 +716,7 @@ class SessionDescription
     }
 
     /**
-     * @param array $group
+     * @param array<array-key, GroupDescription> $group
      * @return void
      */
     public function setGroup(array $group): void

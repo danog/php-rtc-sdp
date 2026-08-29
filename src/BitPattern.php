@@ -14,7 +14,7 @@ namespace Webrtc\SDP;
 /**
  * Represents a pattern a bit and provides functionality to match integers against it.
  */
-class BitPattern
+final class BitPattern
 {
     /** @var int The bitmask used to filter out 'x' bits. */
     private int $mask;
@@ -55,14 +55,14 @@ class BitPattern
     private function createByteMask(string $character, string $pattern): int
     {
         return (
-            (($pattern[0] === $character) << 7) |
-            (($pattern[1] === $character) << 6) |
-            (($pattern[2] === $character) << 5) |
-            (($pattern[3] === $character) << 4) |
-            (($pattern[4] === $character) << 3) |
-            (($pattern[5] === $character) << 2) |
-            (($pattern[6] === $character) << 1) |
-            (($pattern[7] === $character) << 0)
+            ((int) ($pattern[0] === $character) << 7) |
+            ((int) ($pattern[1] === $character) << 6) |
+            ((int) ($pattern[2] === $character) << 5) |
+            ((int) ($pattern[3] === $character) << 4) |
+            ((int) ($pattern[4] === $character) << 3) |
+            ((int) ($pattern[5] === $character) << 2) |
+            ((int) ($pattern[6] === $character) << 1) |
+            ((int) ($pattern[7] === $character) << 0)
         );
     }
 }

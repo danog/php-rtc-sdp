@@ -18,7 +18,7 @@ use Webrtc\SDP\Enum\DtlsRole;
  * Represents DTLS (Datagram Transport Layer Security) parameters.
  */
 #[DataClass]
-class RTCDtlsParameters
+final class RTCDtlsParameters
 {
     /**
      * Initializes a new RTCDtlsParameters instance.

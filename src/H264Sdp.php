@@ -24,7 +24,7 @@ use Webrtc\SDP\Enum\H264Profile;
  * Implements parsing according to RFC 6184 (RTP Payload Format for H.264 Video)
  * and handles profile/level identification as defined in the ITU-T H.264 standard.
  */
-class H264Sdp
+final class H264Sdp
 {
     /**
      * Gets the predefined H.264 profile matching patterns.
@@ -71,12 +71,14 @@ class H264Sdp
      */
     public static function parseH264ProfileLevelId(?string $profileStr): array
     {
-        if (!$profileStr || !preg_match('/^[0-9a-fA-F]{6}$/', $profileStr)) {
+        if ($profileStr === null || !preg_match('/^[0-9a-fA-F]{6}$/', $profileStr)) {
             throw new InvalidArgumentException("Expected a 6-character hexadecimal string");
         }
 
         // Split into three 2-character hex pairs and convert to decimal
-        [$profileIdc, $profileIop, $levelIdc] = array_map('hexdec', str_split($profileStr, 2));
+        $profileIdc = (int) hexdec(substr($profileStr, 0, 2));
+        $profileIop = (int) hexdec(substr($profileStr, 2, 2));
+        $levelIdc = (int) hexdec(substr($profileStr, 4, 2));
 
         // Special case for level 1.1 vs. 1.b detection
         $level = match ($levelIdc) {

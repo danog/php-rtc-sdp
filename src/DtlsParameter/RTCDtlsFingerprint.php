@@ -17,7 +17,7 @@ use Webrtc\Mixin\DataClass;
  * Represents a DTLS fingerprint.
  */
 #[DataClass]
-class RTCDtlsFingerprint
+final class RTCDtlsFingerprint
 {
     /**
      * Initializes a new RTCDtlsFingerprint instance.

@@ -13,7 +13,7 @@ namespace Webrtc\SDP;
 
 use Webrtc\Exception\InvalidArgumentException;
 
-class SDPUtility
+final class SDPUtility
 {
     private const IP_REGEX = "/^IN (IP4|IP6) ([^ ]+)$/";
     public const FMTP_INT_PARAMETERS = ["cname", "msid", "mslabel", "label"];
@@ -49,7 +49,7 @@ class SDPUtility
      * Extracts parameters from an SDP string.
      *
      * @param string $sdp
-     * @return array
+     * @return array<string, int|null|string>
      */
     public static function parametersFromSDP(string $sdp): array
     {
@@ -57,9 +57,9 @@ class SDPUtility
         $params = explode(';', $sdp);
 
         foreach ($params as $param) {
-            if (str_contains($param, '=')) {
-                [$k, $v] = explode('=', $param, 2);
-                $parameters[$k] = in_array($k, self::FMTP_INT_PARAMETERS) ? (int)$v : $v;
+            $parts = explode('=', $param, 2);
+            if (isset($parts[1])) {
+                $parameters[$parts[0]] = in_array($parts[0], self::FMTP_INT_PARAMETERS) ? (int)$parts[1] : $parts[1];
             } else {
                 $parameters[$param] = null;
             }
@@ -71,7 +71,7 @@ class SDPUtility
     /**
      * Converts parameters to an SDP string.
      *
-     * @param array $parameters
+     * @param array<string, int|null|string> $parameters
      * @return string
      */
     public static function parametersToSDP(array $parameters): string
@@ -88,19 +88,15 @@ class SDPUtility
      *
      * @param string $value
      * @param string $type
-     * @return ?GroupDescription
+     * @return GroupDescription
      */
-    public static function parseGroup(string $value, string $type = 'string'): ?GroupDescription
+    public static function parseGroup(string $value, string $type = 'string'): GroupDescription
     {
         $bits = explode(' ', trim($value));
-        if (!empty($bits)) {
-            $items = array_map(
-                fn($item) => $type === 'int' ? (int)$item : $item,
-                array_slice($bits, 1)
-            );
-            return new GroupDescription(semantic: $bits[0], items: $items);
-        }
-
-        return null;
+        $items = array_map(
+            fn(string $item) => $type === 'int' ? (int)$item : $item,
+            array_slice($bits, 1)
+        );
+        return new GroupDescription(semantic: $bits[0], items: $items);
     }
 }

@@ -14,7 +14,7 @@ namespace Webrtc\SDP\SctpParameter;
 /**
  * Provides information about the capabilities of the RTCSctpTransport.
  */
-class RTCSctpCapabilities
+final class RTCSctpCapabilities
 {
     /**
      * The maximum size of data that the implementation can send or

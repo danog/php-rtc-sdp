@@ -16,7 +16,7 @@ use Webrtc\Exception\InvalidArgumentException;
 /**
  * Represents a session description for WebRTC.
  */
-class RTCSessionDescription
+final class RTCSessionDescription
 {
     /** @var string The SDP (Session Description Protocol) string. */
     private string $sdp;

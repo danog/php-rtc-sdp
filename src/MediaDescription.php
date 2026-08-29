@@ -11,6 +11,7 @@
 
 namespace Webrtc\SDP;
 
+use Webrtc\Exception\InvalidArgumentException;
 use Webrtc\ICE\RTCIceCandidate;
 use Webrtc\ICE\RTCIceParameters;
 use Webrtc\RTPParameter\RTCRtpParameters;
@@ -21,7 +22,7 @@ use Webrtc\SDP\SctpParameter\RTCSctpCapabilities;
 /**
  * Represents a media description for SDP (Session Description Protocol).
  */
-class MediaDescription
+final class MediaDescription
 {
     // RTP properties
     private string $kind;
@@ -44,7 +45,7 @@ class MediaDescription
     private array $ssrcGroup = [];
 
     // Formats
-    /** @var array */
+    /** @var list<int|string> */
     private array $fmt;
 
     // RTP parameters
@@ -80,7 +81,7 @@ class MediaDescription
      * @param string $kind The media kind (e.g., "audio", "video").
      * @param int $port The media port.
      * @param string $profile The media profile (e.g., "RTP/AVP").
-     * @param array $fmt The media formats.
+     * @param list<int|string> $fmt The media formats.
      */
     public function __construct(
         string $kind, int $port, string $profile, array $fmt)
@@ -182,7 +183,7 @@ class MediaDescription
      */
     private function generateMidLine(): ?string
     {
-        if ($this->rtp->muxId === null || $this->rtp->muxId === "") {
+        if ($this->rtp->muxId === "") {
             return null;
         }
         return sprintf("a=mid:%s", $this->rtp->muxId);
@@ -245,8 +246,13 @@ class MediaDescription
     {
         $lines = [];
         foreach ($this->ssrc as $ssrcInfo) {
-            foreach (['cname', 'msid', 'mslabel', 'label'] as $attr) {
-                $value = $ssrcInfo->$attr;
+            $attributes = [
+                'cname' => $ssrcInfo->cname,
+                'msid' => $ssrcInfo->msid,
+                'mslabel' => $ssrcInfo->mslabel,
+                'label' => $ssrcInfo->label,
+            ];
+            foreach ($attributes as $attr => $value) {
                 if ($value !== null) {
                     $lines[] = sprintf("a=ssrc:%d %s:%s", $ssrcInfo->ssrc, $attr, $value);
                 }
@@ -264,6 +270,9 @@ class MediaDescription
     {
         $lines = [];
         foreach ($this->rtp->codecs as $codec) {
+            if ($codec->payloadType === null) {
+                throw new InvalidArgumentException("Codec is missing a payload type and cannot be serialized to SDP");
+            }
             $lines[] = sprintf("a=rtpmap:%d %s", $codec->payloadType, $codec);
 
             // RTCP feedback
@@ -338,7 +347,7 @@ class MediaDescription
     private function generateDtlsLines(): array
     {
         $lines = [];
-        if (!empty($this->dtls->fingerprints)) {
+        if ($this->dtls !== null && $this->dtls->fingerprints !== []) {
             foreach ($this->dtls->fingerprints as $fingerprint) {
                 $lines[] = sprintf(
                     "a=fingerprint:%s %s",
@@ -357,6 +366,32 @@ class MediaDescription
     public function getDtls(): ?RTCDtlsParameters
     {
         return $this->dtls;
+    }
+
+    /**
+     * Returns the DTLS parameters, throwing if they are absent.
+     *
+     * @throws InvalidArgumentException If the media description has no DTLS parameters.
+     */
+    public function requireDtls(): RTCDtlsParameters
+    {
+        if ($this->dtls === null) {
+            throw new InvalidArgumentException("Media description has no DTLS parameters");
+        }
+        return $this->dtls;
+    }
+
+    /**
+     * Returns the ICE parameters, throwing if they are absent.
+     *
+     * @throws InvalidArgumentException If the media description has no ICE parameters.
+     */
+    public function requireIce(): RTCIceParameters
+    {
+        if ($this->ice === null) {
+            throw new InvalidArgumentException("Media description has no ICE parameters");
+        }
+        return $this->ice;
     }
 
     /**
@@ -428,7 +463,7 @@ class MediaDescription
     }
 
     /**
-     * @param array $iceCandidates
+     * @param array<array-key, RTCIceCandidate> $iceCandidates
      * @return void
      */
     public function setIceCandidates(array $iceCandidates): void
@@ -573,7 +608,7 @@ class MediaDescription
     }
 
     /**
-     * @param array $sctpmap
+     * @param array<int, string> $sctpmap
      * @return void
      */
     public function setSctpmap(array $sctpmap): void
@@ -617,7 +652,7 @@ class MediaDescription
     }
 
     /**
-     * @param array $ssrcGroup
+     * @param array<array-key, GroupDescription> $ssrcGroup
      * @return void
      */
     public function setSsrcGroup(array $ssrcGroup): void
@@ -643,7 +678,7 @@ class MediaDescription
     }
 
     /**
-     * @param array $ssrc
+     * @param array<array-key, SsrcDescription> $ssrc
      * @return void
      */
     public function setSsrc(array $ssrc): void
@@ -729,7 +764,7 @@ class MediaDescription
     }
 
     /**
-     * @return array
+     * @return list<int|string>
      */
     public function getFmt(): array
     {
@@ -737,7 +772,7 @@ class MediaDescription
     }
 
     /**
-     * @param array $fmt
+     * @param list<int|string> $fmt
      * @return void
      */
     public function setFmt(array $fmt): void

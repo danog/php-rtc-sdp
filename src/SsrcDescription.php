@@ -17,7 +17,7 @@ use Webrtc\Mixin\DataClass;
  * Represents an SSRC (Synchronization Source) description.
  */
 #[DataClass]
-class SsrcDescription
+final class SsrcDescription
 {
     /**
      * Initializes a new SsrcDescription instance.

@@ -17,7 +17,7 @@ use Webrtc\Mixin\DataClass;
  * Represents a group description with a semantic label and a list of items.
  */
 #[DataClass]
-class GroupDescription
+final class GroupDescription
 {
     /**
      * Initializes a new GroupDescription instance.
