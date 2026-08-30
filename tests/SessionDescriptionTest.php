@@ -5,13 +5,9 @@ namespace Tests\Webrtc\SDP;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Webrtc\ICE\RTCIceCandidate;
-use Webrtc\ICE\RTCIceParameters;
 use Webrtc\RTPParameter\RTCRtcpFeedback;
-use Webrtc\RTPParameter\RTCRtcpParameters;
 use Webrtc\RTPParameter\RTCRtpCodecParameters;
 use Webrtc\RTPParameter\RTCRtpHeaderExtensionParameters;
-use Webrtc\RTPParameter\RTCRtpParameters;
 use Webrtc\SDP\DtlsParameter\RTCDtlsFingerprint;
 use Webrtc\SDP\DtlsParameter\RTCDtlsParameters;
 use Webrtc\SDP\Enum\DtlsRole;
@@ -25,18 +21,11 @@ use Webrtc\SDP\SsrcDescription;
 
 #[UsesClass(RTCDtlsFingerprint::class)]
 #[UsesClass(RTCDtlsParameters::class)]
-#[UsesClass(RTCIceCandidate::class)]
-#[UsesClass(RTCIceParameters::class)]
-#[UsesClass(RTCRtcpParameters::class)]
-#[UsesClass(RTCRtpCodecParameters::class)]
-#[UsesClass(RTCRtpParameters::class)]
 #[UsesClass(MediaDescription::class)]
 #[UsesClass(SDPUtility::class)]
 #[UsesClass(GroupDescription::class)]
 #[UsesClass(SsrcDescription::class)]
 #[UsesClass(RTCSctpCapabilities::class)]
-#[UsesClass(RTCRtpHeaderExtensionParameters::class)]
-#[UsesClass(RTCRtcpFeedback::class)]
 #[UsesClass(\Webrtc\SDP\Enum\SDPDirections::class)]
 #[CoversClass(SessionDescription::class)]
 class SessionDescriptionTest extends TestCase
