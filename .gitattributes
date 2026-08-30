@@ -1,0 +1,6 @@
+# SDP fixtures are stored with LF line endings; the tests convert them to CRLF
+# themselves (str_replace("\n", "\r\n", ...)). Without this, a Windows checkout with
+# autocrlf=true rewrites the fixtures to CRLF, the test then doubles them to "\r\r\n",
+# and the parser leaves a trailing "\r" on every value (e.g. setup:actpass). Force LF
+# on all platforms so text files are consistent everywhere.
+* text=auto eol=lf
