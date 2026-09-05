@@ -30,7 +30,7 @@
         "danog/php-rtc-exception": "^1.1.5",
         "danog/php-rtc-rtp-parameter": "^1.1.4",
         "danog/php-rtc-ice": "^1.1.18",
-        "symfony/polyfill-php84": ">=1.38.1"
+        "symfony/polyfill-php84": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5 || ^12.0 || ^13.3.2",
