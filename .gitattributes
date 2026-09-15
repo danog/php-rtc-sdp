@@ -4,3 +4,7 @@
 # and the parser leaves a trailing "\r" on every value (e.g. setup:actpass). Force LF
 # on all platforms so text files are consistent everywhere.
 * text=auto eol=lf
+
+# Exclude tests and documentation from `git archive` / Composer dist tarballs.
+tests/ export-ignore
+*.md export-ignore
