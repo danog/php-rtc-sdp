@@ -237,16 +237,16 @@ final class SessionDescription
         }
 
         $kind = $matches[1];
-        $port = (int)$matches[2];
+        $port = (int)$matches[2]; // regex guarantees [0-9]+
         $profile = $matches[3];
         $fmt = explode(" ", $matches[4]);
 
         // Validate payload types
         $fmtInt = null;
         if (in_array($kind, ["audio", "video"])) {
-            $fmtInt = array_map('intval', $fmt);
+            $fmtInt = array_map(fn(string $pt) => SDPUtility::parseInt($pt, "payload type"), $fmt);
             foreach ($fmtInt as $pt) {
-                if ($pt < 0 || $pt >= 256 || in_array($pt, self::FORBIDDEN_PAYLOAD_TYPES)) {
+                if ($pt >= 256 || in_array($pt, self::FORBIDDEN_PAYLOAD_TYPES)) {
                     throw new InvalidArgumentException("Invalid payload type: $pt");
                 }
             }
@@ -291,7 +291,7 @@ final class SessionDescription
                     $media->requireIce()->usernameFragment = $value;
                     break;
                 case "max-message-size":
-                    $media->setSctpCapabilities(new RTCSctpCapabilities((int)$value));
+                    $media->setSctpCapabilities(new RTCSctpCapabilities(SDPUtility::parseInt($value, "max-message-size")));
                     break;
                 case "mid":
 //                    var_dump($value);
@@ -318,10 +318,10 @@ final class SessionDescription
                     break;
                 case "sctpmap":
                     [$formatId, $formatDesc] = self::splitPair($value, " ");
-                    $media->addSctpmap((int)$formatId, $formatDesc);
+                    $media->addSctpmap(SDPUtility::parseInt($formatId, "sctpmap format"), $formatDesc);
                     break;
                 case "sctp-port":
-                    $media->setSctpPort((int)$value);
+                    $media->setSctpPort(SDPUtility::parseInt($value, "sctp-port"));
                     break;
                 case "ssrc-group":
                     $media->addSsrcGroup(SDPUtility::parseGroup($value, "int"));
@@ -371,7 +371,7 @@ final class SessionDescription
         if (str_contains($extId, "/")) {
             list($extId,) = explode("/", $extId);
         }
-        $extension = new RTCRtpHeaderExtensionParameters((int)$extId, $extUri);
+        $extension = new RTCRtpHeaderExtensionParameters(SDPUtility::parseInt($extId, "extmap id"), $extUri);
         $media->getRtp()->headerExtensions[] = $extension;
     }
 
@@ -384,7 +384,7 @@ final class SessionDescription
     private function decodeRtcpAttribute(MediaDescription $media, string $value): void
     {
         [$port, $rest] = self::splitPair($value, " ");
-        $media->setRtcpPort((int)$port);
+        $media->setRtcpPort(SDPUtility::parseInt($port, "rtcp port"));
         $media->setRtcpHost(SDPUtility::ipAddressFromSdp($rest));
     }
 
@@ -402,10 +402,10 @@ final class SessionDescription
         if (!isset($bits[1])) {
             throw new InvalidArgumentException("Malformed rtpmap value, expected \"codec/clockrate\": $value");
         }
-        $channels = $media->getKind() === "video" ? null : (($media->getKind() === "audio" && count($bits) > 2) ? (int)$bits[2] : 1);
+        $channels = $media->getKind() === "video" ? null : (($media->getKind() === "audio" && count($bits) > 2) ? SDPUtility::parseInt($bits[2], "rtpmap channels") : 1);
         $codec = new RTCRtpCodecParameters(
             $media->getKind() . "/" . $bits[0],
-            (int)$bits[1],
+            SDPUtility::parseInt($bits[1], "rtpmap clock rate"),
             $channels,
             (int)$formatId
         );
@@ -421,7 +421,7 @@ final class SessionDescription
     private function decodeSsrcAttribute(MediaDescription $media, string $value): void
     {
         [$ssrcStr, $ssrcDesc] = self::splitPair($value, " ");
-        $ssrc = (int)$ssrcStr;
+        $ssrc = SDPUtility::parseInt($ssrcStr, "ssrc");
         $descParts = explode(":", $ssrcDesc, 2);
         $ssrcAttr = $descParts[0];
 
@@ -450,7 +450,7 @@ final class SessionDescription
     private function decodeFmtpAttribute(MediaDescription $media, string $value): void
     {
         [$formatId, $formatDesc] = self::splitPair($value, " ");
-        $codec = self::findCodec($media->getRtp()->codecs, (int)$formatId);
+        $codec = self::findCodec($media->getRtp()->codecs, SDPUtility::parseInt($formatId, "fmtp format"));
         $codec->parameters = SDPUtility::parametersFromSdp($formatDesc);
     }
 

@@ -19,6 +19,26 @@ final class SDPUtility
     public const FMTP_INT_PARAMETERS = ["cname", "msid", "mslabel", "label"];
 
     /**
+     * Parses a non-negative integer field taken from untrusted remote SDP text.
+     *
+     * Bare (int)/intval casts silently turn malformed tokens ("abc", "12xyz") into 0, which then
+     * slips past range checks and surfaces much later as an opaque failure (port 0, clock rate 0,
+     * two distinct SSRCs collapsing to 0, ...). This rejects non-numeric input up front instead.
+     *
+     * @param string $value The raw token from the SDP line.
+     * @param string $field Human-readable field name for the error message.
+     * @return int
+     * @throws InvalidArgumentException When $value is not a base-10 non-negative integer.
+     */
+    public static function parseInt(string $value, string $field): int
+    {
+        if (!ctype_digit($value)) {
+            throw new InvalidArgumentException("Invalid $field in SDP, expected a non-negative integer: \"$value\"");
+        }
+        return (int)$value;
+    }
+
+    /**
      * Extracts the IP address from an SDP string.
      *
      * @param string $sdp
@@ -94,7 +114,7 @@ final class SDPUtility
     {
         $bits = explode(' ', trim($value));
         $items = array_map(
-            fn(string $item) => $type === 'int' ? (int)$item : $item,
+            fn(string $item) => $type === 'int' ? self::parseInt($item, 'group item') : $item,
             array_slice($bits, 1)
         );
         return new GroupDescription(semantic: $bits[0], items: $items);
