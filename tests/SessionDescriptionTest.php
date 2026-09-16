@@ -3,8 +3,10 @@
 namespace Tests\Webrtc\SDP;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Webrtc\Exception\InvalidArgumentException;
 use Webrtc\RTPParameter\RTCRtcpFeedback;
 use Webrtc\RTPParameter\RTCRtpCodecParameters;
 use Webrtc\RTPParameter\RTCRtpHeaderExtensionParameters;
@@ -888,6 +890,64 @@ class SessionDescriptionTest extends TestCase
         $this->assertEquals("DTLS/SCTP", $sdp->getMedia()[2]->getProfile());
         $this->assertNull($sdp->getMedia()[2]->getDirection());
         $this->assertNull($sdp->getMedia()[2]->getMsid());
+    }
+
+    #[DataProvider('validIntProvider')]
+    public function testParseIntAcceptsNonNegativeIntegers(string $value, int $expected)
+    {
+        $this->assertSame($expected, SDPUtility::parseInt($value, "field"));
+    }
+
+    /** @return array<string, array{string, int}> */
+    public static function validIntProvider(): array
+    {
+        return [
+            "zero" => ["0", 0],
+            "payload type" => ["96", 96],
+            "clock rate" => ["48000", 48000],
+            "max u32 ssrc" => ["4294967295", 4294967295],
+        ];
+    }
+
+    #[DataProvider('invalidIntProvider')]
+    public function testParseIntRejectsMalformedInput(string $value)
+    {
+        // Regression: a bare (int) cast would silently coerce these to 0 instead of rejecting.
+        $this->expectException(InvalidArgumentException::class);
+        SDPUtility::parseInt($value, "field");
+    }
+
+    /** @return array<string, array{string}> */
+    public static function invalidIntProvider(): array
+    {
+        return [
+            "empty" => [""],
+            "alpha" => ["abc"],
+            "trailing garbage" => ["12xyz"],
+            "negative" => ["-1"],
+            "float" => ["1.5"],
+            "hex" => ["0x10"],
+            "whitespace" => [" 1"],
+        ];
+    }
+
+    public function testDecodeRejectsNonNumericPayloadType()
+    {
+        // Regression: array_map('intval', ...) turned "abc" into PT 0, silently slipping a
+        // malformed payload-type token past the range/forbidden-PT validation.
+        $sdp = str_replace("SAVPF 111 103", "SAVPF abc 103", $this->getSdpContent("audio_chrome"));
+
+        $this->expectException(InvalidArgumentException::class);
+        SessionDescription::decode($sdp);
+    }
+
+    public function testDecodeRejectsNonNumericSsrc()
+    {
+        // Regression: (int)"notanumber" collapsed distinct SSRCs to 0 and merged their descriptions.
+        $sdp = str_replace("a=ssrc:1944796561 cname:", "a=ssrc:notanumber cname:", $this->getSdpContent("audio_chrome"));
+
+        $this->expectException(InvalidArgumentException::class);
+        SessionDescription::decode($sdp);
     }
 
     private function getSdpContent(string $filename, bool $creation = false): string
